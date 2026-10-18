@@ -66,7 +66,7 @@ FalkorDB must be running locally for the application to work.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/SamruddhiKoparde/Graph_Sleuth
+git clone https://github.com/SamruddhiKoparde/GraphSleuth
 cd GraphSleuth
 ```
 
@@ -204,9 +204,9 @@ Event: WeMakeDevs x FalkorDB Graph Hacks
 
 Track: Track 01 - Agents That Act on Connected Data
 
-Repository: <YOUR_PUBLIC_REPOSITORY_URL>
+Repository: https://github.com/SamruddhiKoparde/GraphSleuth 
 
-Demo video: <YOUR_DEMO_VIDEO_URL>
+Demo video: https://youtu.be/5x-QltCpvt4?si=jb6pVaostrHq-c4g
 
 ## AI assistance
 
