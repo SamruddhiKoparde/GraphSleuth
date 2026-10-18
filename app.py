@@ -8,11 +8,10 @@ from src.risk_score import calculate_risk_scores
 
 st.set_page_config(
     page_title="GraphSleuth",
-    page_icon="🔎",
     layout="wide",
 )
 
-st.title("🔎 GraphSleuth")
+st.title(" GraphSleuth")
 st.caption("Graph-powered fraud investigation | Synthetic demo data")
 st.header("Upload Transaction Data")
 
@@ -225,6 +224,17 @@ def render_account_investigation(graph, account):
     nodes_by_id = {}
     edges = []
 
+    # Highlight edges belonging to paths affected by the simulated block.
+    simulated_block_account = st.session_state.get("simulated_block_account")
+    disrupted_edges = set()
+    if simulated_block_account:
+        for path_row in get_affected_paths(graph, simulated_block_account):
+            accounts_in_path = path_row[0]
+            disrupted_edges.update(
+                (accounts_in_path[i], accounts_in_path[i + 1])
+                for i in range(len(accounts_in_path) - 1)
+            )
+
     for source, target, tx_id, amount in graph_data.result_set:
         for account_id in (source, target):
             if account_id not in nodes_by_id:
@@ -232,13 +242,22 @@ def render_account_investigation(graph, account):
                     id=account_id,
                     label=account_id,
                     size=25,
+                    color="#3B82F6",
                 )
 
+        edge_color = (
+            "#EF4444"
+            if simulated_block_account and (source, target) in disrupted_edges
+            else "#9CA3AF"
+        )
         edges.append(
             Edge(
                 source=source,
                 target=target,
                 label=f"{tx_id}: {amount:g}",
+                title=f"Transaction amount: {amount:g}",
+                width=4 if amount > 90000 else 1,
+                color=edge_color,
                 directed=True,
             )
         )
@@ -283,7 +302,7 @@ try:
 
     # Explainable risk ranking
     st.divider()
-    st.subheader("📊 Explainable Account Risk Ranking")
+    st.subheader("Explainable Account Risk Ranking")
     st.caption(
         "Transparent heuristic scores based on graph evidence. "
         "Scores are not fraud probabilities or proof of wrongdoing."
@@ -300,13 +319,13 @@ try:
                 "Evidence": (
                     " · ".join(
                         reason.replace(
-                            "Appears in many multi-hop paths", "Multi-hop"
+                            "Appears in many multi-hop paths", "Flow-through"
                         )
                         .replace(
                             "Receives and forwards funds", "Flow-through"
                         )
                         .replace(
-                            "Large outgoing transfer total", "High outflow"
+                            "Large outgoing transfer total", "High out-flow"
                         )
                         .replace(
                             "High transaction activity", "High activity"
@@ -314,7 +333,7 @@ try:
                         for reason in item["reasons"]
                     )
                     if item["reasons"]
-                    else "No elevated indicators"
+                    else "No indicators"
                 ),
             }
             for item in risk_results
@@ -378,10 +397,9 @@ try:
 
     # Intervention simulator
     st.divider()
-    st.subheader("🧪 Intervention Simulator")
+    st.subheader("Intervention Simulator")
     st.write(
-        "Compare how temporarily excluding different accounts affects "
-        "chronological transaction paths. This is a simulation."
+        "Simulate blocking an account to see affected transaction paths."
     )
 
     simulation_account = st.selectbox(
@@ -405,7 +423,8 @@ try:
         key="alternative_account",
     )
 
-    if st.button("Simulate intervention", type="secondary"):
+    if st.button("Simulate intervention", type="primary"):
+        st.session_state["simulated_block_account"] = simulation_account
         baseline = count_paths(graph)
         results = []
 
@@ -434,7 +453,7 @@ try:
                         st.write(" → ".join(path_row[0]))
 
         best = max(results, key=lambda item: item["Paths disrupted"])
-        st.subheader("🧠 Intervention analysis")
+        st.subheader("Intervention analysis")
         st.success(
             f"Highest path disruption in this comparison: "
             f"{best['Account blocked']} "
@@ -456,7 +475,7 @@ try:
 
     # Agent investigation
     st.divider()
-    st.subheader("🤖 Agent Investigation")
+    st.subheader("Agent Investigation")
     st.write(
         "Discover transaction flows, rank accounts for follow-up, "
         "and review the evidence behind the recommendation."
